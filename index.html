@@ -173,15 +173,27 @@
                 </div>
             </div>
 
+            <!-- Mode tes: Baca / Tulis -->
             <div>
-                <div class="text-sm font-semibold text-slate-600 mb-2">Mode urutan</div>
+                <div class="text-sm font-semibold text-slate-600 mb-2">Mode tes</div>
+                <div class="flex gap-2">
+                    <button data-opt="type" data-val="baca" onclick="selectOpt('type','baca')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Mode Baca</button>
+                    <button data-opt="type" data-val="tulis" onclick="selectOpt('type','tulis')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Mode Tulis</button>
+                </div>
+                <p id="type-desc" class="text-xs text-slate-400 mt-2"></p>
+            </div>
+
+            <!-- Urutan: Berurutan / Acak -->
+            <div>
+                <div class="text-sm font-semibold text-slate-600 mb-2">Urutan kanji</div>
                 <div class="flex gap-2">
                     <button data-opt="mode" data-val="seq" onclick="selectOpt('mode','seq')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Berurutan</button>
                     <button data-opt="mode" data-val="rand" onclick="selectOpt('mode','rand')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Acak</button>
                 </div>
             </div>
 
-            <div>
+            <!-- Kanji per layar (hanya Mode Baca) -->
+            <div id="per-section">
                 <div class="text-sm font-semibold text-slate-600 mb-2">Kanji per layar</div>
                 <div class="flex gap-2">
                     <button data-opt="per" data-val="1" onclick="selectOpt('per','1')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">1</button>
@@ -204,11 +216,33 @@
         <div class="w-full h-2 bg-slate-100 rounded-full mb-5 overflow-hidden">
             <div id="test-bar" class="h-full bg-teal-500 transition-all duration-300" style="width:0%"></div>
         </div>
+
         <div id="test-grid" class="mb-3"></div>
-        <p class="text-center text-xs text-slate-400 mb-5">Tebak dulu, lalu ketuk kartu untuk lihat jawaban</p>
+        <p id="test-hint" class="text-center text-xs text-slate-400 mb-4"></p>
+
+        <!-- Area jawaban (Mode Tulis) -->
+        <div id="test-write" class="hidden mb-5">
+            <div class="space-y-3">
+                <div>
+                    <label for="ans-read" class="block text-xs font-semibold text-slate-500 mb-1">Cara baca (hiragana atau romaji)</label>
+                    <input id="ans-read" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                           placeholder="contoh: なまえ / namae"
+                           class="w-full h-11 border border-slate-200 rounded-xl px-3 bg-white focus:outline-none focus:border-teal-500 disabled:bg-slate-50 disabled:text-slate-500">
+                </div>
+                <div>
+                    <label for="ans-mean" class="block text-xs font-semibold text-slate-500 mb-1">Arti</label>
+                    <input id="ans-mean" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                           placeholder="contoh: nama"
+                           class="w-full h-11 border border-slate-200 rounded-xl px-3 bg-white focus:outline-none focus:border-teal-500 disabled:bg-slate-50 disabled:text-slate-500">
+                </div>
+                <button id="btn-check" onclick="checkAnswer()" class="w-full h-11 bg-slate-800 text-white rounded-xl font-semibold hover:bg-slate-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Periksa &amp; Buka Kartu</button>
+            </div>
+            <div id="ans-result" class="hidden mt-1 space-y-2"></div>
+        </div>
+
         <div class="flex gap-3">
             <button id="test-prev" onclick="prevTest()" class="flex-1 h-11 border border-slate-200 rounded-xl bg-white text-slate-600 font-medium hover:bg-slate-100 disabled:opacity-40">Sebelumnya</button>
-            <button id="test-next" onclick="nextTest()" class="flex-1 h-11 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700">Berikutnya</button>
+            <button id="test-next" onclick="nextTest()" class="flex-1 h-11 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed">Berikutnya</button>
         </div>
     </div>
 
@@ -216,7 +250,8 @@
     <div id="test-done" class="hidden text-center bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
         <div class="text-5xl mb-3">🎉</div>
         <h2 class="text-xl font-bold text-teal-700 mb-1">Tes selesai!</h2>
-        <p id="test-done-text" class="text-slate-500 text-sm mb-6"></p>
+        <p id="test-done-text" class="text-slate-500 text-sm mb-4"></p>
+        <div id="test-score" class="hidden mb-6 space-y-2 text-sm"></div>
         <div class="flex gap-3">
             <button onclick="startTest()" class="flex-1 h-11 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700">Ulangi</button>
             <button onclick="showTestSetup()" class="flex-1 h-11 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 font-medium hover:bg-slate-100">Atur Ulang</button>
@@ -497,10 +532,20 @@ function shareApp() {
 }
 
 // ================= TES HAFALAN =================
-const testState = { mode: 'seq', per: 1, list: [], idx: 0 };
+// type: 'baca' | 'tulis'   mode: 'seq' (berurutan) | 'rand' (acak)
+const testState = { type: 'baca', mode: 'seq', per: 1, list: [], idx: 0, answers: [] };
 const rangeState = { from: 1, to: totalPages };   // default: halaman 1 sampai terakhir
 const WHEEL_ITEM_H = 40;                          // tinggi satu angka di roda (px)
 const $ = id => document.getElementById(id);
+
+// Mode tulis selalu 1 kanji per layar
+function effPer() {
+    return testState.type === 'tulis' ? 1 : testState.per;
+}
+
+function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 // ---- Roda pemilih halaman ----
 function buildWheel(which) {
@@ -600,6 +645,7 @@ function showTestSetup() {
     $('test-run').classList.add('hidden');
     $('test-done').classList.add('hidden');
     updateOptStyles();
+    updateTypeUI();
     syncWheels();
     updateTestInfo();
     window.scrollTo(0, 0);
@@ -617,9 +663,18 @@ function updateOptStyles() {
     });
 }
 
+function updateTypeUI() {
+    const tulis = testState.type === 'tulis';
+    $('per-section').classList.toggle('hidden', tulis);
+    $('type-desc').textContent = tulis
+        ? 'Ketik cara baca dan arti kanji dulu. Kartu baru terbuka setelah jawabanmu diperiksa. (1 kanji per layar)'
+        : 'Lihat kanji, tebak dalam hati, lalu balik kartunya sendiri.';
+}
+
 function selectOpt(kind, val) {
     testState[kind] = kind === 'per' ? parseInt(val) : val;
     updateOptStyles();
+    updateTypeUI();
 }
 
 function getTestRange() {
@@ -646,6 +701,7 @@ function startTest() {
 
     testState.list = list;
     testState.idx = 0;
+    testState.answers = list.map(() => ({ read: '', mean: '', checked: false, rOk: false, mOk: false }));
 
     $('test-setup').classList.add('hidden');
     $('test-done').classList.add('hidden');
@@ -654,12 +710,14 @@ function startTest() {
     window.scrollTo(0, 0);
 }
 
-function testCardHTML(item, big) {
+// ---- Kartu ----
+function testCardHTML(item, big, opts = {}) {
     const [kanji, furigana, arti, page] = item;
     const romaji = kanaToRomaji(furigana);
-    const size = big ? 'h-64' : 'aspect-[5/4]';
+    const tap = opts.tap !== false;
+    const size = opts.height || (big ? 'h-64' : 'aspect-[5/4]');
     return `
-    <div class="card group perspective-1000 cursor-pointer w-full ${size}" onclick="this.classList.toggle('flipped')">
+    <div class="card group perspective-1000 ${tap ? 'cursor-pointer' : ''} w-full ${size} ${opts.flipped ? 'flipped' : ''}" ${tap ? `onclick="this.classList.toggle('flipped')"` : ''}>
         <div class="card-inner relative w-full h-full transform-style-3d">
             <div class="absolute inset-0 backface-hidden bg-white border border-slate-200 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center justify-center p-3">
                 <span class="absolute top-2 left-3 text-[11px] text-slate-300">Hal. ${page}</span>
@@ -675,13 +733,26 @@ function testCardHTML(item, big) {
 }
 
 function renderTest() {
-    const { list, idx, per } = testState;
+    const { list, idx } = testState;
+    const per = effPer();
+    const tulis = testState.type === 'tulis';
     const slice = list.slice(idx, idx + per);
     const shownEnd = Math.min(idx + per, list.length);
+    const ans = tulis ? testState.answers[idx] : null;
 
     const grid = $('test-grid');
     grid.className = 'mb-3 grid gap-4 ' + (per === 1 ? 'grid-cols-1' : 'grid-cols-2');
-    grid.innerHTML = slice.map(item => testCardHTML(item, per === 1)).join('');
+    grid.innerHTML = slice.map(item => tulis
+        ? testCardHTML(item, true, { tap: false, flipped: ans.checked, height: 'h-52' })
+        : testCardHTML(item, per === 1)
+    ).join('');
+
+    $('test-hint').textContent = tulis
+        ? 'Isi cara baca dan arti, lalu tekan "Periksa & Buka Kartu"'
+        : 'Tebak dulu, lalu ketuk kartu untuk lihat jawaban';
+
+    $('test-write').classList.toggle('hidden', !tulis);
+    if (tulis) renderWrite();
 
     $('test-progress').textContent = per === 1
         ? `${idx + 1} / ${list.length}`
@@ -689,40 +760,222 @@ function renderTest() {
     $('test-bar').style.width = (shownEnd / list.length * 100) + '%';
     $('test-prev').disabled = idx === 0;
     $('test-next').textContent = shownEnd >= list.length ? 'Selesai' : 'Berikutnya';
+    $('test-next').disabled = tulis && !ans.checked;
 }
 
+// ---- Mode Tulis: form jawaban ----
+function renderWrite() {
+    const ans = testState.answers[testState.idx];
+    const r = $('ans-read');
+    const m = $('ans-mean');
+    r.value = ans.read;
+    m.value = ans.mean;
+    r.disabled = ans.checked;
+    m.disabled = ans.checked;
+    $('btn-check').classList.toggle('hidden', ans.checked);
+    $('ans-result').classList.toggle('hidden', !ans.checked);
+    if (ans.checked) $('ans-result').innerHTML = resultHTML(ans);
+    updateCheckBtn();
+    if (!ans.checked && !('ontouchstart' in window)) r.focus();
+}
+
+function updateCheckBtn() {
+    $('btn-check').disabled = !($('ans-read').value.trim() && $('ans-mean').value.trim());
+}
+
+function setupWriteInputs() {
+    const r = $('ans-read');
+    const m = $('ans-mean');
+
+    r.addEventListener('input', () => {
+        const ans = testState.answers[testState.idx];
+        if (ans && !ans.checked) ans.read = r.value;
+        updateCheckBtn();
+    });
+    m.addEventListener('input', () => {
+        const ans = testState.answers[testState.idx];
+        if (ans && !ans.checked) ans.mean = m.value;
+        updateCheckBtn();
+    });
+    r.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); m.focus(); }
+    });
+    m.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); }
+    });
+}
+
+// ---- Pengecekan jawaban ----
+// Cara baca: terima hiragana ATAU romaji (variasi ejaan seperti si/shi, tu/tsu, ti/chi diterima)
+function cleanFurigana(f) {
+    return f.replace(/[(（]な[)）]/g, '').replace(/[~〜～]/g, '');
+}
+
+function normKana(s) {
+    return cleanFurigana(s).replace(/[\s　]/g, '');
+}
+
+function normRomaji(s) {
+    return s.toLowerCase()
+        .replace(/[^a-z]/g, '')
+        .replace(/tch/g, 'cch')
+        .replace(/shi/g, 'si').replace(/chi/g, 'ti').replace(/tsu/g, 'tu')
+        .replace(/fu/g, 'hu').replace(/ji/g, 'zi')
+        .replace(/sh([aou])/g, 'sy$1').replace(/ch([aou])/g, 'ty$1').replace(/j([aou])/g, 'zy$1');
+}
+
+function checkReading(user, furigana) {
+    const raw = user.trim();
+    if (!raw) return false;
+    const cleaned = cleanFurigana(furigana);
+    const parts = cleaned.split(/[、・\/]/).filter(Boolean);
+
+    // Cek hiragana
+    const kanaOptions = [normKana(cleaned), ...parts.map(normKana)];
+    if (kanaOptions.includes(normKana(raw))) return true;
+
+    // Cek romaji
+    const romajiOptions = [cleaned, ...parts].map(p => normRomaji(kanaToRomaji(p))).filter(Boolean);
+    return romajiOptions.includes(normRomaji(raw));
+}
+
+// Arti: pengecekan longgar (otomatis), hasilnya bisa diubah manual oleh pengguna
+function normText(s) {
+    return s.toLowerCase()
+        .replace(/['’]/g, '')
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function meaningCandidates(arti) {
+    const noParen = arti.replace(/\(.*?\)/g, ' ');
+    const set = new Set();
+    [arti, noParen].forEach(t => {
+        set.add(normText(t));
+        t.split(/[\/,;]/).forEach(p => {
+            const n = normText(p.replace(/\(.*?\)/g, ' '));
+            if (n) set.add(n);
+        });
+    });
+    set.delete('');
+    return [...set];
+}
+
+function checkMeaning(user, arti) {
+    const u = normText(user);
+    if (!u) return false;
+    return meaningCandidates(arti).some(c =>
+        c === u || (Math.min(c.length, u.length) >= 4 && (c.includes(u) || u.includes(c)))
+    );
+}
+
+function checkAnswer() {
+    const ans = testState.answers[testState.idx];
+    if (!ans || ans.checked) return;
+
+    const read = $('ans-read').value.trim();
+    const mean = $('ans-mean').value.trim();
+    if (!read || !mean) { showToast('Isi cara baca dan arti dulu ya'); return; }
+
+    const item = testState.list[testState.idx];
+    ans.read = read;
+    ans.mean = mean;
+    ans.rOk = checkReading(read, item[1]);
+    ans.mOk = checkMeaning(mean, item[2]);
+    ans.checked = true;
+
+    // Balik kartu dengan animasi
+    const card = $('test-grid').querySelector('.card');
+    if (card) card.classList.add('flipped');
+
+    renderWrite();
+    $('test-next').disabled = false;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    $('ans-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function resultHTML(ans) {
+    const chip = (ok, label, userText, key) => `
+        <button onclick="toggleOk('${key}')" class="w-full flex items-center justify-between gap-3 text-left rounded-xl border px-3 py-2 ${ok ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}">
+            <span class="min-w-0">
+                <span class="block text-[11px] text-slate-500">${label}</span>
+                <span class="block text-sm font-medium text-slate-800 break-words">${esc(userText)}</span>
+            </span>
+            <span class="shrink-0 text-xs font-bold ${ok ? 'text-emerald-600' : 'text-rose-600'}">${ok ? '✓ Benar' : '✗ Salah'}</span>
+        </button>`;
+    return chip(ans.rOk, 'Cara baca kamu', ans.read, 'rOk')
+         + chip(ans.mOk, 'Arti kamu', ans.mean, 'mOk')
+         + '<p class="text-[11px] text-slate-400 text-center">Jawaban benar ada di kartu. Ketuk hasil di atas untuk mengubah penilaian jika kurang pas.</p>';
+}
+
+function toggleOk(key) {
+    const ans = testState.answers[testState.idx];
+    if (!ans || !ans.checked) return;
+    ans[key] = !ans[key];
+    $('ans-result').innerHTML = resultHTML(ans);
+}
+
+// ---- Navigasi soal ----
 function nextTest() {
     const t = testState;
-    if (t.idx + t.per >= t.list.length) {
+    const per = effPer();
+    const tulis = t.type === 'tulis';
+    if (tulis && !t.answers[t.idx].checked) return;
+
+    if (t.idx + per >= t.list.length) {
         $('test-run').classList.add('hidden');
         $('test-done').classList.remove('hidden');
         $('test-done-text').textContent = `Kamu sudah melewati ${t.list.length} kanji (${t.mode === 'rand' ? 'acak' : 'berurutan'}).`;
+
+        const scoreEl = $('test-score');
+        if (tulis) {
+            const r = t.answers.filter(a => a.rOk).length;
+            const m = t.answers.filter(a => a.mOk).length;
+            scoreEl.innerHTML = `
+                <div class="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 px-4 py-2"><span class="text-slate-500">Cara baca benar</span><span class="font-bold text-teal-700">${r} / ${t.list.length}</span></div>
+                <div class="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 px-4 py-2"><span class="text-slate-500">Arti benar</span><span class="font-bold text-teal-700">${m} / ${t.list.length}</span></div>`;
+            scoreEl.classList.remove('hidden');
+        } else {
+            scoreEl.classList.add('hidden');
+        }
         window.scrollTo(0, 0);
         return;
     }
-    t.idx += t.per;
+    t.idx += per;
     renderTest();
+    if (tulis) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function prevTest() {
-    testState.idx = Math.max(0, testState.idx - testState.per);
+    testState.idx = Math.max(0, testState.idx - effPer());
     renderTest();
+    if (testState.type === 'tulis') window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Shortcut keyboard: panah kiri / kanan (hanya saat sesi tes berjalan)
+// Shortcut keyboard (tidak aktif saat mengetik di kotak jawaban)
 document.addEventListener('keydown', e => {
     if ($('test-run').classList.contains('hidden')) return;
-    if (e.key === 'ArrowRight') nextTest();
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    if (e.key === 'ArrowRight' && !$('test-next').disabled) nextTest();
     if (e.key === 'ArrowLeft') prevTest();
+    if (e.key === 'Enter' && tag !== 'BUTTON' && testState.type === 'tulis'
+        && testState.answers[testState.idx] && testState.answers[testState.idx].checked) {
+        nextTest();
+    }
 });
 
 // ================= INISIALISASI =================
 buildWheel('from');
 buildWheel('to');
 setupRangeInputs();
+setupWriteInputs();
 refreshWheel('from', false);
 refreshWheel('to', false);
 updateOptStyles();
+updateTypeUI();
 renderCards();
 </script>
 
