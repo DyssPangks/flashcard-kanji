@@ -13,7 +13,6 @@
             -webkit-tap-highlight-color: transparent;
         }
         .kanji-font { font-family: 'Noto Sans JP', sans-serif; }
-
         /* 3D Flip Styles */
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
@@ -21,7 +20,6 @@
         .rotate-y-180 { transform: rotateY(180deg); }
         .card-inner { transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1); }
         .card.flipped .card-inner { transform: rotateY(180deg); }
-
         /* Roda pemilih halaman (scroll picker) */
         .wheel {
             scroll-snap-type: y mandatory;
@@ -36,7 +34,9 @@
             user-select: none;
             -webkit-user-select: none;
         }
-
+        /* Margin 0 = header/footer browser (URL, "1 of 1") tidak tercetak.
+           Margin kertas dibuat sendiri lewat wrapPrint() di JavaScript. */
+        @page { size: A4; margin: 0; }
         /* Print formatting */
         @media print {
             body { background-color: white; padding: 0; }
@@ -50,10 +50,8 @@
     </style>
 </head>
 <body class="text-slate-800">
-
 <!-- ================= HALAMAN UTAMA ================= -->
 <div id="main-view" class="max-w-md mx-auto p-4 pt-6">
-
     <div class="no-print">
         <div class="flex items-center gap-2 mb-4">
             <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -62,7 +60,6 @@
             </svg>
             <h1 class="text-xl font-bold text-teal-700 tracking-tight">Flashcard Kanji JFT</h1>
         </div>
-
         <div class="flex flex-wrap items-center gap-2 mb-6">
             <button onclick="prepareAndPrint()" class="flex items-center gap-2 bg-[#e6fcf5] text-teal-600 px-4 py-2 rounded-lg font-medium hover:bg-teal-100 transition-colors text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -71,6 +68,10 @@
                     <rect width="12" height="8" x="6" y="14"/>
                 </svg>
                 Siapkan PDF
+            </button>
+            <button onclick="openExam()" data-testid="open-exam-button" class="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-lg font-medium hover:bg-amber-100 transition-colors text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+                Cetak Soal
             </button>
             <button onclick="shareApp()" class="flex items-center gap-2 bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-medium hover:bg-slate-200 transition-colors text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -85,19 +86,16 @@
                 Tes Hafalan
             </button>
         </div>
-
         <!-- Pagination Box -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
             <div class="text-center mb-5 text-[15px] text-slate-500">
                 Halaman <span class="font-bold text-teal-600" id="curr-page">1</span> dari <span id="tot-page">29</span>
                 <span class="text-slate-400 ml-1" id="tot-words">(576 Kosakata)</span>
             </div>
-
             <div class="flex justify-center items-center gap-3">
                 <button id="btn-prev" class="w-10 h-10 flex items-center justify-center border border-slate-200 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 disabled:opacity-50 transition-colors" onclick="changePage(-1)">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-
                 <button class="px-5 h-10 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 font-medium flex items-center gap-2 text-slate-600 text-sm transition-colors" onclick="resetCards()">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
@@ -105,24 +103,19 @@
                     </svg>
                     Reset
                 </button>
-
                 <button id="btn-next" class="w-10 h-10 flex items-center justify-center border border-slate-200 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-colors" onclick="changePage(1)">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
             </div>
         </div>
     </div>
-
     <!-- Cards Grid -->
     <div class="grid grid-cols-2 gap-4 pb-8 screen-only" id="flashcard-grid"></div>
-
     <!-- Print Container -->
     <div id="print-container" class="print-only"></div>
 </div>
-
 <!-- ================= HALAMAN TES HAFALAN ================= -->
 <div id="test-view" class="max-w-md mx-auto p-4 pt-6 hidden no-print">
-
     <!-- Setup -->
     <div id="test-setup">
         <div class="flex items-center gap-2 mb-4">
@@ -131,14 +124,11 @@
             </button>
             <h1 class="text-xl font-bold text-teal-700 tracking-tight">Tes Hafalan</h1>
         </div>
-
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-5">
-
             <!-- Rentang halaman: roda geser + ketik -->
             <div>
                 <div class="text-sm font-semibold text-slate-600 mb-1">Rentang halaman</div>
                 <div class="text-xs text-slate-400 mb-3">Geser angka ke atas/bawah, atau ketik langsung di kotak.</div>
-
                 <div class="flex items-start gap-4">
                     <!-- DARI -->
                     <div class="flex-1">
@@ -152,7 +142,6 @@
                             <div class="absolute inset-x-0 bottom-0 h-[50px] bg-gradient-to-t from-white to-transparent pointer-events-none z-20"></div>
                         </div>
                     </div>
-
                     <!-- SAMPAI -->
                     <div class="flex-1">
                         <div class="text-xs text-slate-400 text-center mb-1">Sampai halaman</div>
@@ -166,13 +155,11 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex items-center justify-between mt-3">
                     <div id="test-info" class="text-xs text-slate-400"></div>
                     <button onclick="setAllPages()" class="text-xs font-medium text-teal-600 hover:text-teal-700">Pilih semua halaman</button>
                 </div>
             </div>
-
             <!-- Mode tes: Baca / Tulis -->
             <div>
                 <div class="text-sm font-semibold text-slate-600 mb-2">Mode tes</div>
@@ -182,7 +169,6 @@
                 </div>
                 <p id="type-desc" class="text-xs text-slate-400 mt-2"></p>
             </div>
-
             <!-- Urutan: Berurutan / Acak -->
             <div>
                 <div class="text-sm font-semibold text-slate-600 mb-2">Urutan kanji</div>
@@ -191,7 +177,6 @@
                     <button data-opt="mode" data-val="rand" onclick="selectOpt('mode','rand')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Acak</button>
                 </div>
             </div>
-
             <!-- Kanji per layar (hanya Mode Baca) -->
             <div id="per-section">
                 <div class="text-sm font-semibold text-slate-600 mb-2">Kanji per layar</div>
@@ -202,11 +187,9 @@
                     <button data-opt="per" data-val="6" onclick="selectOpt('per','6')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">6</button>
                 </div>
             </div>
-
             <button onclick="startTest()" class="w-full h-11 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors">Mulai Tes</button>
         </div>
     </div>
-
     <!-- Sesi tes -->
     <div id="test-run" class="hidden">
         <div class="flex items-center justify-between mb-2">
@@ -216,10 +199,8 @@
         <div class="w-full h-2 bg-slate-100 rounded-full mb-5 overflow-hidden">
             <div id="test-bar" class="h-full bg-teal-500 transition-all duration-300" style="width:0%"></div>
         </div>
-
         <div id="test-grid" class="mb-3"></div>
         <p id="test-hint" class="text-center text-xs text-slate-400 mb-4"></p>
-
         <!-- Area jawaban (Mode Tulis) -->
         <div id="test-write" class="hidden mb-5">
             <div class="space-y-3">
@@ -239,13 +220,11 @@
             </div>
             <div id="ans-result" class="hidden mt-1 space-y-2"></div>
         </div>
-
         <div class="flex gap-3">
             <button id="test-prev" onclick="prevTest()" class="flex-1 h-11 border border-slate-200 rounded-xl bg-white text-slate-600 font-medium hover:bg-slate-100 disabled:opacity-40">Sebelumnya</button>
             <button id="test-next" onclick="nextTest()" class="flex-1 h-11 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed">Berikutnya</button>
         </div>
     </div>
-
     <!-- Selesai -->
     <div id="test-done" class="hidden text-center bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
         <div class="text-5xl mb-3">🎉</div>
@@ -258,13 +237,98 @@
         </div>
     </div>
 </div>
-
+<!-- ================= HALAMAN CETAK SOAL ================= -->
+<div id="exam-view" class="max-w-md mx-auto p-4 pt-6 hidden no-print">
+    <div class="flex items-center gap-2 mb-4">
+        <button onclick="closeExam()" class="w-9 h-9 flex items-center justify-center border border-slate-200 rounded-xl bg-white text-slate-600 hover:bg-slate-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-teal-700 tracking-tight">Cetak Soal</h1>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-5">
+        <div>
+            <div class="text-sm font-semibold text-slate-600 mb-1">Ambil kanji dari halaman</div>
+            <div class="text-xs text-slate-400 mb-3">Geser angka ke atas/bawah, atau ketik langsung di kotak.</div>
+            <div class="flex items-start gap-4">
+                <div class="flex-1">
+                    <div class="text-xs text-slate-400 text-center mb-1">Dari halaman</div>
+                    <input id="exam-from" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+                           class="w-full h-10 mb-2 border border-slate-200 rounded-xl text-center bg-slate-50 font-semibold text-teal-700 text-base focus:outline-none focus:border-teal-500">
+                    <div class="relative h-[160px]">
+                        <div class="absolute inset-x-0 top-[60px] h-10 bg-teal-50 border-y border-teal-200 rounded-lg pointer-events-none"></div>
+                        <div id="wheel-exam-from" class="wheel relative z-10 h-full overflow-y-auto"></div>
+                        <div class="absolute inset-x-0 top-0 h-[50px] bg-gradient-to-b from-white to-transparent pointer-events-none z-20"></div>
+                        <div class="absolute inset-x-0 bottom-0 h-[50px] bg-gradient-to-t from-white to-transparent pointer-events-none z-20"></div>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <div class="text-xs text-slate-400 text-center mb-1">Sampai halaman</div>
+                    <input id="exam-to" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+                           class="w-full h-10 mb-2 border border-slate-200 rounded-xl text-center bg-slate-50 font-semibold text-teal-700 text-base focus:outline-none focus:border-teal-500">
+                    <div class="relative h-[160px]">
+                        <div class="absolute inset-x-0 top-[60px] h-10 bg-teal-50 border-y border-teal-200 rounded-lg pointer-events-none"></div>
+                        <div id="wheel-exam-to" class="wheel relative z-10 h-full overflow-y-auto"></div>
+                        <div class="absolute inset-x-0 top-0 h-[50px] bg-gradient-to-b from-white to-transparent pointer-events-none z-20"></div>
+                        <div class="absolute inset-x-0 bottom-0 h-[50px] bg-gradient-to-t from-white to-transparent pointer-events-none z-20"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between mt-3">
+                <div id="exam-info" class="text-xs text-slate-400"></div>
+                <button onclick="examAllPages()" class="text-xs font-medium text-teal-600 hover:text-teal-700">Pilih semua halaman</button>
+            </div>
+        </div>
+        <div>
+            <div class="text-sm font-semibold text-slate-600 mb-1">Jumlah soal</div>
+            <div class="text-xs text-slate-400 mb-2">Kosongkan untuk memakai semua kanji di rentang tersebut.</div>
+            <input id="exam-count" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Semua"
+                   class="w-full h-10 border border-slate-200 rounded-xl px-3 bg-slate-50 focus:outline-none focus:border-teal-500">
+        </div>
+        <div>
+            <div class="text-sm font-semibold text-slate-600 mb-2">Tata letak</div>
+            <div class="flex gap-2">
+                <button data-exam="layout" data-val="wide" onclick="examOpt('layout','wide')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Longgar</button>
+                <button data-exam="layout" data-val="compact" onclick="examOpt('layout','compact')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Padat (100/hal.)</button>
+            </div>
+            <p id="exam-layout-desc" class="text-xs text-slate-400 mt-2"></p>
+        </div>
+        <div>
+            <div class="text-sm font-semibold text-slate-600 mb-2">Urutan kanji</div>
+            <div class="flex gap-2">
+                <button data-exam="order" data-val="rand" onclick="examOpt('order','rand')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Acak</button>
+                <button data-exam="order" data-val="seq" onclick="examOpt('order','seq')" class="flex-1 h-10 border rounded-xl text-sm font-medium transition-colors">Berurutan</button>
+            </div>
+            <p id="exam-order-desc" class="text-xs text-slate-400 mt-2"></p>
+        </div>
+        <div>
+            <div class="text-sm font-semibold text-slate-600 mb-2">Yang harus dijawab</div>
+            <div class="flex gap-2">
+                <button data-exam="kind" data-val="both" onclick="examOpt('kind','both')" class="flex-1 h-10 border rounded-xl text-xs font-medium transition-colors">Hiragana + Arti</button>
+                <button data-exam="kind" data-val="read" onclick="examOpt('kind','read')" class="flex-1 h-10 border rounded-xl text-xs font-medium transition-colors">Hiragana saja</button>
+                <button data-exam="kind" data-val="mean" onclick="examOpt('kind','mean')" class="flex-1 h-10 border rounded-xl text-xs font-medium transition-colors">Arti saja</button>
+            </div>
+        </div>
+        <p class="text-xs text-slate-400">Lembar soal tidak menampilkan nomor halaman, jadi kamu tidak bisa menebak kanji itu dari halaman berapa.</p>
+        <div class="flex gap-2">
+            <button id="btn-exam-print" data-testid="exam-print-button" onclick="printExam()" class="flex-1 h-11 flex items-center justify-center gap-2 bg-[#e6fcf5] text-teal-700 rounded-xl font-semibold hover:bg-teal-100 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                Cetak
+            </button>
+            <button id="btn-exam-pdf" data-testid="exam-save-pdf-button" onclick="saveExamPdf()" class="flex-1 h-11 flex items-center justify-center gap-2 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-wait">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Simpan PDF
+            </button>
+        </div>
+        <p class="text-xs text-slate-400 -mt-2">"Cetak" membuka menu cetak browser. "Simpan PDF" langsung mengunduh file .pdf (butuh internet).</p>
+    </div>
+</div>
+<!-- Area cetak khusus soal (kosong kecuali saat mencetak) -->
+<div id="exam-print" class="print-only"></div>
 <!-- Toast Notification -->
-<div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-xl text-sm transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+<div id="toast" data-testid="toast" class="no-print fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-xl text-sm transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
     <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
     <span id="toast-message">Link disalin!</span>
 </div>
-
 <script>
 // ================= KONVERSI HIRAGANA -> ROMAJI =================
 const romajiMap = {
@@ -295,7 +359,6 @@ const romajiMap = {
     'びゃ':'bya','びゅ':'byu','びょ':'byo',
     'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo'
 };
-
 function kanaToRomaji(kana) {
     let result = "";
     let i = 0;
@@ -303,7 +366,6 @@ function kanaToRomaji(kana) {
         let char = kana[i];
         let nextChar = kana[i+1] || "";
         let combined = char + nextChar;
-
         if (romajiMap[combined]) {
             result += romajiMap[combined]; i += 2;
         } else if (romajiMap[char]) {
@@ -325,7 +387,6 @@ function kanaToRomaji(kana) {
     }
     return result;
 }
-
 // ================= DATA KOSAKATA (576 item, 29 halaman) =================
 const db = [
     // Page 1
@@ -387,29 +448,23 @@ const db = [
     // Page 29
     ["お疲れ","おつかれ","Kerja bagus"], ["お先に","おさきに","Permisi duluan"], ["急いで","いそいで","Buru-buru"], ["走ります","はしります","Berlari"], ["座ります","すわります","Duduk"], ["息をする","いきをする","Bernafas"], ["謝る","あやまる","Meminta maaf"], ["諦める","あきらめる","Menyerah"], ["辞める","やめる","Berhenti dari perusahaan"], ["食べ物","たべもの","Makanan"], ["買い物","かいもの","Berbelanja"], ["送ります","おくります","Mengirim"], ["煩い","うるさい","Berisik"], ["試験","しけん","Ujian"], ["試合","しあい","Pertandingan"], ["話す","はなす","Berbicara"]
 ];
-
 // ================= HALAMAN UTAMA =================
 let currentPage = 1;
 const itemsPerPage = 20;
 const totalPages = Math.ceil(db.length / itemsPerPage);
-
 document.getElementById('tot-words').textContent = `(${db.length} Kosakata)`;
 document.getElementById('tot-page').textContent = totalPages;
-
 function renderCards() {
     const container = document.getElementById('flashcard-grid');
     container.innerHTML = '';
-
     const start = (currentPage - 1) * itemsPerPage;
     const end = Math.min(start + itemsPerPage, db.length);
     const currentData = db.slice(start, end);
-
     currentData.forEach(item => {
         const kanji = item[0];
         const furigana = item[1];
         const arti = item[2];
         const romaji = kanaToRomaji(furigana);
-
         const cardHTML = `
         <div class="card group perspective-1000 cursor-pointer w-full aspect-[5/4] sm:h-36" onclick="this.classList.toggle('flipped')">
             <div class="card-inner relative w-full h-full transform-style-3d">
@@ -426,12 +481,10 @@ function renderCards() {
         `;
         container.insertAdjacentHTML('beforeend', cardHTML);
     });
-
     document.getElementById('curr-page').textContent = currentPage;
     document.getElementById('btn-prev').disabled = currentPage === 1;
     document.getElementById('btn-next').disabled = currentPage === totalPages;
 }
-
 function changePage(direction) {
     const newPage = currentPage + direction;
     if (newPage >= 1 && newPage <= totalPages) {
@@ -440,7 +493,6 @@ function changePage(direction) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
-
 // Fisher-Yates shuffle
 function shuffleArray(array) {
     let currentIndex = array.length, randomIndex;
@@ -451,38 +503,37 @@ function shuffleArray(array) {
     }
     return array;
 }
-
 function resetCards() {
     const start = (currentPage - 1) * itemsPerPage;
     const end = Math.min(start + itemsPerPage, db.length);
-
     let pageSlice = db.slice(start, end);
     shuffleArray(pageSlice);
-
     for (let i = 0; i < pageSlice.length; i++) {
         db[start + i] = pageSlice[i];
     }
     renderCards();
 }
-
 // ================= PDF / PRINT =================
+function wrapPrint(inner) {
+    return `<table style="width:100%; border-collapse:collapse; border:0;">
+        <thead><tr><td style="height:10mm; padding:0; border:0;"></td></tr></thead>
+        <tfoot><tr><td style="height:10mm; padding:0; border:0;"></td></tr></tfoot>
+        <tbody><tr><td style="padding:0 10mm; border:0; vertical-align:top;">${inner}</td></tr></tbody>
+    </table>`;
+}
 function prepareAndPrint() {
     const printContainer = document.getElementById('print-container');
     printContainer.innerHTML = '';
-
     const headerHTML = `<h2 style="text-align:center; font-size: 22px; font-family: sans-serif; margin-bottom: 24px; color: #0f172a;">Daftar Lengkap Flashcard Kanji JFT (${db.length} Kosakata)</h2>`;
-
     const grid = document.createElement('div');
     grid.style.display = 'grid';
     grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
     grid.style.gap = '12px';
-
     db.forEach((item, index) => {
         const kanji = item[0];
         const furigana = item[1];
         const arti = item[2];
         const romaji = kanaToRomaji(furigana);
-
         const cardHTML = `
             <div style="border: 2px solid #e2e8f0; padding: 12px; text-align: center; border-radius: 12px; page-break-inside: avoid; font-family: sans-serif;">
                 <div style="font-size: 11px; color: #94a3b8; text-align: left; margin-bottom: 4px;">#${index + 1}</div>
@@ -494,21 +545,20 @@ function prepareAndPrint() {
         `;
         grid.insertAdjacentHTML('beforeend', cardHTML);
     });
-
     printContainer.insertAdjacentHTML('afterbegin', headerHTML);
     printContainer.appendChild(grid);
-
+    printContainer.innerHTML = wrapPrint(printContainer.innerHTML);
     setTimeout(() => { window.print(); }, 400);
 }
-
 // ================= SHARE =================
-function showToast(message) {
+let toastTimer = null;
+function showToast(message, sticky) {
     const toast = document.getElementById('toast');
     document.getElementById('toast-message').textContent = message;
+    clearTimeout(toastTimer);
     toast.classList.remove('opacity-0');
-    setTimeout(() => { toast.classList.add('opacity-0'); }, 3000);
+    if (!sticky) toastTimer = setTimeout(() => { toast.classList.add('opacity-0'); }, 3000);
 }
-
 function shareApp() {
     if (navigator.share) {
         navigator.share({
@@ -530,23 +580,17 @@ function shareApp() {
         }
     }
 }
-
 // ================= TES HAFALAN =================
-// type: 'baca' | 'tulis'   mode: 'seq' (berurutan) | 'rand' (acak)
 const testState = { type: 'baca', mode: 'seq', per: 1, list: [], idx: 0, answers: [] };
-const rangeState = { from: 1, to: totalPages };   // default: halaman 1 sampai terakhir
-const WHEEL_ITEM_H = 40;                          // tinggi satu angka di roda (px)
+const rangeState = { from: 1, to: totalPages };
+const WHEEL_ITEM_H = 40;
 const $ = id => document.getElementById(id);
-
-// Mode tulis selalu 1 kanji per layar
 function effPer() {
     return testState.type === 'tulis' ? 1 : testState.per;
 }
-
 function esc(s) {
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-
 // ---- Roda pemilih halaman ----
 function buildWheel(which) {
     const wheel = $('wheel-' + which);
@@ -556,14 +600,11 @@ function buildWheel(which) {
     }
     html += '<div style="height:60px"></div>';
     wheel.innerHTML = html;
-
-    // Saat digeser: ambil angka yang ada di tengah
     wheel.addEventListener('scroll', () => {
         const idx = Math.min(totalPages - 1, Math.max(0, Math.round(wheel.scrollTop / WHEEL_ITEM_H)));
         if (idx + 1 !== rangeState[which]) setPage(which, idx + 1, false);
     }, { passive: true });
 }
-
 function refreshWheel(which, doScroll) {
     const wheel = $('wheel-' + which);
     const v = rangeState[which];
@@ -578,26 +619,20 @@ function refreshWheel(which, doScroll) {
         el.classList.toggle('text-slate-300', !active);
     });
 }
-
 function setPage(which, value, scrollWheel) {
     value = Math.min(totalPages, Math.max(1, value));
     rangeState[which] = value;
-
-    // Pastikan "dari" tidak lebih besar dari "sampai"
     let pushed = null;
     if (which === 'from' && rangeState.from > rangeState.to) { rangeState.to = rangeState.from; pushed = 'to'; }
     if (which === 'to' && rangeState.to < rangeState.from) { rangeState.from = rangeState.to; pushed = 'from'; }
-
     refreshWheel(which, scrollWheel);
     if (pushed) refreshWheel(pushed, true);
     updateTestInfo();
 }
-
 function setupRangeInputs() {
     ['from', 'to'].forEach(which => {
         const input = $('test-' + which + '-input');
         input.maxLength = String(totalPages).length;
-
         input.addEventListener('focus', () => input.select());
         input.addEventListener('input', () => {
             input.value = input.value.replace(/\D/g, '');
@@ -614,32 +649,27 @@ function setupRangeInputs() {
         });
     });
 }
-
 function syncWheels() {
     refreshWheel('from', true);
     refreshWheel('to', true);
 }
-
 function setAllPages() {
     rangeState.from = 1;
     rangeState.to = totalPages;
     syncWheels();
     updateTestInfo();
 }
-
 // ---- Navigasi halaman tes ----
 function openTest() {
     $('main-view').classList.add('hidden');
     $('test-view').classList.remove('hidden');
     showTestSetup();
 }
-
 function closeTest() {
     $('test-view').classList.add('hidden');
     $('main-view').classList.remove('hidden');
     window.scrollTo(0, 0);
 }
-
 function showTestSetup() {
     $('test-setup').classList.remove('hidden');
     $('test-run').classList.add('hidden');
@@ -650,7 +680,6 @@ function showTestSetup() {
     updateTestInfo();
     window.scrollTo(0, 0);
 }
-
 function updateOptStyles() {
     document.querySelectorAll('[data-opt]').forEach(b => {
         const active = String(testState[b.dataset.opt]) === b.dataset.val;
@@ -662,7 +691,6 @@ function updateOptStyles() {
         b.classList.toggle('border-slate-200', !active);
     });
 }
-
 function updateTypeUI() {
     const tulis = testState.type === 'tulis';
     $('per-section').classList.toggle('hidden', tulis);
@@ -670,13 +698,11 @@ function updateTypeUI() {
         ? 'Ketik cara baca dan arti kanji dulu. Kartu baru terbuka setelah jawabanmu diperiksa. (1 kanji per layar)'
         : 'Lihat kanji, tebak dalam hati, lalu balik kartunya sendiri.';
 }
-
 function selectOpt(kind, val) {
     testState[kind] = kind === 'per' ? parseInt(val) : val;
     updateOptStyles();
     updateTypeUI();
 }
-
 function getTestRange() {
     const from = rangeState.from;
     const to = rangeState.to;
@@ -684,32 +710,25 @@ function getTestRange() {
     const end = Math.min(to * itemsPerPage, db.length);
     return { from, to, start, end };
 }
-
 function updateTestInfo() {
     const r = getTestRange();
     $('test-info').textContent = `Halaman ${r.from}–${r.to} · ${r.end - r.start} kanji`;
 }
-
 function startTest() {
     const r = getTestRange();
-
-    // salin data + simpan nomor halaman asal
     let list = db.slice(r.start, r.end).map((item, i) =>
         [...item, Math.floor((r.start + i) / itemsPerPage) + 1]
     );
     if (testState.mode === 'rand') shuffleArray(list);
-
     testState.list = list;
     testState.idx = 0;
     testState.answers = list.map(() => ({ read: '', mean: '', checked: false, rOk: false, mOk: false }));
-
     $('test-setup').classList.add('hidden');
     $('test-done').classList.add('hidden');
     $('test-run').classList.remove('hidden');
     renderTest();
     window.scrollTo(0, 0);
 }
-
 // ---- Kartu ----
 function testCardHTML(item, big, opts = {}) {
     const [kanji, furigana, arti, page] = item;
@@ -731,7 +750,6 @@ function testCardHTML(item, big, opts = {}) {
         </div>
     </div>`;
 }
-
 function renderTest() {
     const { list, idx } = testState;
     const per = effPer();
@@ -739,21 +757,17 @@ function renderTest() {
     const slice = list.slice(idx, idx + per);
     const shownEnd = Math.min(idx + per, list.length);
     const ans = tulis ? testState.answers[idx] : null;
-
     const grid = $('test-grid');
     grid.className = 'mb-3 grid gap-4 ' + (per === 1 ? 'grid-cols-1' : 'grid-cols-2');
     grid.innerHTML = slice.map(item => tulis
         ? testCardHTML(item, true, { tap: false, flipped: ans.checked, height: 'h-52' })
         : testCardHTML(item, per === 1)
     ).join('');
-
     $('test-hint').textContent = tulis
         ? 'Isi cara baca dan arti, lalu tekan "Periksa & Buka Kartu"'
         : 'Tebak dulu, lalu ketuk kartu untuk lihat jawaban';
-
     $('test-write').classList.toggle('hidden', !tulis);
     if (tulis) renderWrite();
-
     $('test-progress').textContent = per === 1
         ? `${idx + 1} / ${list.length}`
         : `${idx + 1}–${shownEnd} / ${list.length}`;
@@ -762,7 +776,6 @@ function renderTest() {
     $('test-next').textContent = shownEnd >= list.length ? 'Selesai' : 'Berikutnya';
     $('test-next').disabled = tulis && !ans.checked;
 }
-
 // ---- Mode Tulis: form jawaban ----
 function renderWrite() {
     const ans = testState.answers[testState.idx];
@@ -778,15 +791,12 @@ function renderWrite() {
     updateCheckBtn();
     if (!ans.checked && !('ontouchstart' in window)) r.focus();
 }
-
 function updateCheckBtn() {
     $('btn-check').disabled = !($('ans-read').value.trim() && $('ans-mean').value.trim());
 }
-
 function setupWriteInputs() {
     const r = $('ans-read');
     const m = $('ans-mean');
-
     r.addEventListener('input', () => {
         const ans = testState.answers[testState.idx];
         if (ans && !ans.checked) ans.read = r.value;
@@ -804,17 +814,13 @@ function setupWriteInputs() {
         if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); }
     });
 }
-
 // ---- Pengecekan jawaban ----
-// Cara baca: terima hiragana ATAU romaji (variasi ejaan seperti si/shi, tu/tsu, ti/chi diterima)
 function cleanFurigana(f) {
     return f.replace(/[(（]な[)）]/g, '').replace(/[~〜～]/g, '');
 }
-
 function normKana(s) {
-    return cleanFurigana(s).replace(/[\s　]/g, '');
+    return cleanFurigana(s).replace(/[\s ]/g, '');
 }
-
 function normRomaji(s) {
     return s.toLowerCase()
         .replace(/[^a-z]/g, '')
@@ -823,23 +829,16 @@ function normRomaji(s) {
         .replace(/fu/g, 'hu').replace(/ji/g, 'zi')
         .replace(/sh([aou])/g, 'sy$1').replace(/ch([aou])/g, 'ty$1').replace(/j([aou])/g, 'zy$1');
 }
-
 function checkReading(user, furigana) {
     const raw = user.trim();
     if (!raw) return false;
     const cleaned = cleanFurigana(furigana);
     const parts = cleaned.split(/[、・\/]/).filter(Boolean);
-
-    // Cek hiragana
     const kanaOptions = [normKana(cleaned), ...parts.map(normKana)];
     if (kanaOptions.includes(normKana(raw))) return true;
-
-    // Cek romaji
     const romajiOptions = [cleaned, ...parts].map(p => normRomaji(kanaToRomaji(p))).filter(Boolean);
     return romajiOptions.includes(normRomaji(raw));
 }
-
-// Arti: pengecekan longgar (otomatis), hasilnya bisa diubah manual oleh pengguna
 function normText(s) {
     return s.toLowerCase()
         .replace(/['’]/g, '')
@@ -847,7 +846,6 @@ function normText(s) {
         .replace(/\s+/g, ' ')
         .trim();
 }
-
 function meaningCandidates(arti) {
     const noParen = arti.replace(/\(.*?\)/g, ' ');
     const set = new Set();
@@ -861,7 +859,6 @@ function meaningCandidates(arti) {
     set.delete('');
     return [...set];
 }
-
 function checkMeaning(user, arti) {
     const u = normText(user);
     if (!u) return false;
@@ -869,32 +866,25 @@ function checkMeaning(user, arti) {
         c === u || (Math.min(c.length, u.length) >= 4 && (c.includes(u) || u.includes(c)))
     );
 }
-
 function checkAnswer() {
     const ans = testState.answers[testState.idx];
     if (!ans || ans.checked) return;
-
     const read = $('ans-read').value.trim();
     const mean = $('ans-mean').value.trim();
     if (!read || !mean) { showToast('Isi cara baca dan arti dulu ya'); return; }
-
     const item = testState.list[testState.idx];
     ans.read = read;
     ans.mean = mean;
     ans.rOk = checkReading(read, item[1]);
     ans.mOk = checkMeaning(mean, item[2]);
     ans.checked = true;
-
-    // Balik kartu dengan animasi
     const card = $('test-grid').querySelector('.card');
     if (card) card.classList.add('flipped');
-
     renderWrite();
     $('test-next').disabled = false;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     $('ans-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-
 function resultHTML(ans) {
     const chip = (ok, label, userText, key) => `
         <button onclick="toggleOk('${key}')" class="w-full flex items-center justify-between gap-3 text-left rounded-xl border px-3 py-2 ${ok ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}">
@@ -908,26 +898,22 @@ function resultHTML(ans) {
          + chip(ans.mOk, 'Arti kamu', ans.mean, 'mOk')
          + '<p class="text-[11px] text-slate-400 text-center">Jawaban benar ada di kartu. Ketuk hasil di atas untuk mengubah penilaian jika kurang pas.</p>';
 }
-
 function toggleOk(key) {
     const ans = testState.answers[testState.idx];
     if (!ans || !ans.checked) return;
     ans[key] = !ans[key];
     $('ans-result').innerHTML = resultHTML(ans);
 }
-
 // ---- Navigasi soal ----
 function nextTest() {
     const t = testState;
     const per = effPer();
     const tulis = t.type === 'tulis';
     if (tulis && !t.answers[t.idx].checked) return;
-
     if (t.idx + per >= t.list.length) {
         $('test-run').classList.add('hidden');
         $('test-done').classList.remove('hidden');
         $('test-done-text').textContent = `Kamu sudah melewati ${t.list.length} kanji (${t.mode === 'rand' ? 'acak' : 'berurutan'}).`;
-
         const scoreEl = $('test-score');
         if (tulis) {
             const r = t.answers.filter(a => a.rOk).length;
@@ -946,19 +932,15 @@ function nextTest() {
     renderTest();
     if (tulis) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 function prevTest() {
     testState.idx = Math.max(0, testState.idx - effPer());
     renderTest();
     if (testState.type === 'tulis') window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-// Shortcut keyboard (tidak aktif saat mengetik di kotak jawaban)
 document.addEventListener('keydown', e => {
     if ($('test-run').classList.contains('hidden')) return;
     const tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-
     if (e.key === 'ArrowRight' && !$('test-next').disabled) nextTest();
     if (e.key === 'ArrowLeft') prevTest();
     if (e.key === 'Enter' && tag !== 'BUTTON' && testState.type === 'tulis'
@@ -966,18 +948,354 @@ document.addEventListener('keydown', e => {
         nextTest();
     }
 });
-
+// ================= CETAK SOAL =================
+const examState = { kind: 'both', order: 'rand', layout: 'wide' };
+function openExam() {
+    $('main-view').classList.add('hidden');
+    $('exam-view').classList.remove('hidden');
+    examOptStyles();
+    syncExamWheels();
+    updateExamInfo();
+    window.scrollTo(0, 0);
+}
+function closeExam() {
+    $('exam-view').classList.add('hidden');
+    $('main-view').classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+function examOpt(kind, val) {
+    examState[kind] = val;
+    examOptStyles();
+}
+function examOptStyles() {
+    document.querySelectorAll('[data-exam]').forEach(b => {
+        const active = examState[b.dataset.exam] === b.dataset.val;
+        b.classList.toggle('bg-teal-600', active);
+        b.classList.toggle('text-white', active);
+        b.classList.toggle('border-teal-600', active);
+        b.classList.toggle('bg-slate-50', !active);
+        b.classList.toggle('text-slate-600', !active);
+        b.classList.toggle('border-slate-200', !active);
+    });
+    $('exam-layout-desc').textContent = examState.layout === 'wide'
+        ? 'Satu kanji per baris dengan kolom jawaban lebar (sekitar 16–23 soal per halaman).'
+        : '100 soal per halaman: 2 kolom × 50 baris (nomor 1–50 di kiri, 51–100 di kanan). Barisnya kecil, cocok untuk jawaban singkat.';
+    $('exam-order-desc').textContent = examState.order === 'rand'
+        ? 'Kanji dari semua halaman di rentang dicampur secara acak.'
+        : 'Kanji mengikuti urutan di buku (halaman terkecil dulu). Kalau jumlah soal dibatasi, yang diambil dari awal.';
+}
+const examRange = { from: 1, to: totalPages };
+function buildExamWheel(which) {
+    const wheel = $('wheel-exam-' + which);
+    let html = '<div style="height:60px"></div>';
+    for (let n = 1; n <= totalPages; n++) {
+        html += `<div class="wheel-item flex items-center justify-center cursor-pointer text-lg text-slate-300 transition-all" data-n="${n}" onclick="setExamPage('${which}', ${n}, true)">${n}</div>`;
+    }
+    html += '<div style="height:60px"></div>';
+    wheel.innerHTML = html;
+    wheel.addEventListener('scroll', () => {
+        const idx = Math.min(totalPages - 1, Math.max(0, Math.round(wheel.scrollTop / WHEEL_ITEM_H)));
+        if (idx + 1 !== examRange[which]) setExamPage(which, idx + 1, false);
+    }, { passive: true });
+}
+function refreshExamWheel(which, doScroll) {
+    const wheel = $('wheel-exam-' + which);
+    const v = examRange[which];
+    $('exam-' + which).value = v;
+    if (doScroll) wheel.scrollTop = (v - 1) * WHEEL_ITEM_H;
+    wheel.querySelectorAll('.wheel-item').forEach(el => {
+        const active = parseInt(el.dataset.n) === v;
+        el.classList.toggle('text-2xl', active);
+        el.classList.toggle('font-bold', active);
+        el.classList.toggle('text-teal-700', active);
+        el.classList.toggle('text-lg', !active);
+        el.classList.toggle('text-slate-300', !active);
+    });
+}
+function setExamPage(which, value, scrollWheel) {
+    value = Math.min(totalPages, Math.max(1, value));
+    examRange[which] = value;
+    let pushed = null;
+    if (which === 'from' && examRange.from > examRange.to) { examRange.to = examRange.from; pushed = 'to'; }
+    if (which === 'to' && examRange.to < examRange.from) { examRange.from = examRange.to; pushed = 'from'; }
+    refreshExamWheel(which, scrollWheel);
+    if (pushed) refreshExamWheel(pushed, true);
+    updateExamInfo();
+}
+function syncExamWheels() {
+    refreshExamWheel('from', true);
+    refreshExamWheel('to', true);
+}
+function examAllPages() {
+    examRange.from = 1;
+    examRange.to = totalPages;
+    syncExamWheels();
+    updateExamInfo();
+}
+function getExamRange() {
+    return { f: examRange.from, t: examRange.to };
+}
+function buildExamPool() {
+    const { f, t } = getExamRange();
+    const slice = db.slice((f - 1) * itemsPerPage, Math.min(t * itemsPerPage, db.length));
+    const seen = new Set();
+    return slice.filter(item => {
+        const k = item[0] + '|' + item[1];
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+    });
+}
+function updateExamInfo() {
+    const { f, t } = getExamRange();
+    $('exam-info').textContent = `Halaman ${f}–${t} · ${buildExamPool().length} kanji tersedia`;
+}
+function setupExamInputs() {
+    ['from', 'to'].forEach(which => {
+        const input = $('exam-' + which);
+        input.maxLength = String(totalPages).length;
+        input.addEventListener('focus', () => input.select());
+        input.addEventListener('input', () => {
+            input.value = input.value.replace(/\D/g, '');
+            const n = parseInt(input.value);
+            if (!isNaN(n) && n >= 1 && n <= totalPages) setExamPage(which, n, true);
+        });
+        input.addEventListener('blur', () => {
+            let n = parseInt(input.value);
+            if (isNaN(n)) n = examRange[which];
+            setExamPage(which, n, true);
+        });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') input.blur();
+        });
+    });
+    const cnt = $('exam-count');
+    cnt.addEventListener('input', () => { cnt.value = cnt.value.replace(/\D/g, ''); });
+    cnt.addEventListener('focus', () => cnt.select());
+}
+function buildExamData() {
+    const base = buildExamPool().slice();
+    const pool = examState.order === 'rand' ? shuffleArray(base) : base;
+    if (pool.length === 0) { showToast('Tidak ada kanji di rentang itu'); return null; }
+    let n = parseInt($('exam-count').value);
+    if (isNaN(n) || n < 1 || n > pool.length) n = pool.length;
+    const kind = examState.kind;
+    return { list: pool.slice(0, n), showRead: kind !== 'mean', showMean: kind !== 'read' };
+}
+// ---- Tata letak padat: 100 soal per halaman (2 kolom x 50 baris) ----
+const COMPACT_PER_COL = 50, COMPACT_PER_PAGE = 100;
+function compactHead(list, showRead, showMean) {
+    const what = showRead && showMean ? 'hiragana dan arti' : showRead ? 'hiragana' : 'arti';
+    return `
+        <div style="font-family:sans-serif; margin-bottom:2.5mm;">
+            <div style="text-align:center; font-size:14px; font-weight:bold; margin-bottom:1.8mm; color:#0f172a; line-height:1.2;">Soal Kanji JFT</div>
+            <div style="display:flex; gap:12px; font-size:10.5px; color:#334155; line-height:1.2;">
+                <div style="flex:2;">Nama: <span style="display:inline-block; width:70%; border-bottom:1px solid #334155;">&nbsp;</span></div>
+                <div style="flex:1.3;">Tanggal: <span style="display:inline-block; width:55%; border-bottom:1px solid #334155;">&nbsp;</span></div>
+                <div style="flex:1;">Skor: <span style="display:inline-block; width:45%; border-bottom:1px solid #334155;">&nbsp;</span> / ${list.length}</div>
+            </div>
+            <div style="font-size:9.5px; color:#64748b; margin-top:1.2mm; line-height:1.2;">Tulis ${what} dari setiap kanji berikut.</div>
+        </div>`;
+}
+function compactPage(list, start, showRead, showMean) {
+    const border = '1px solid #94a3b8';
+    const isFirstPage = start === 0;
+    // Tinggi sel disesuaikan agar 50 baris muat penuh 1 lembar A4 (297mm - 20mm margin)
+    // tanpa kepotong di bawah dan huruf kanji tidak menyentuh garis border
+    const rowHeight = isFirstPage ? '4.75mm' : '5.15mm';
+    const row = (i) => {
+        const k = list[i][0];
+        const fs = k.length <= 4 ? 10.5 : (k.length === 5 ? 9 : 8);
+        return `
+        <tr style="height:${rowHeight}; page-break-inside:avoid; break-inside:avoid;">
+            <td style="border:${border}; padding:0; text-align:center; vertical-align:middle; font-size:7.5px; color:#64748b; line-height:1;">${i + 1}</td>
+            <td style="border:${border}; padding:0 1mm; text-align:center; vertical-align:middle; font-weight:bold; font-family:'Noto Sans JP',sans-serif; font-size:${fs}px; line-height:1.15; white-space:nowrap;">${esc(k)}</td>
+            ${showRead ? `<td style="border:${border}; padding:0;"></td>` : ''}
+            ${showMean ? `<td style="border:${border}; padding:0;"></td>` : ''}
+        </tr>`;
+    };
+    const table = (lo, hi) => {
+        hi = Math.min(hi, list.length);
+        if (lo >= hi) return '';
+        let rows = '';
+        for (let i = lo; i < hi; i++) rows += row(i);
+        return `<table style="width:100%; border-collapse:collapse; table-layout:fixed; font-family:sans-serif;">
+            <colgroup><col style="width:6.5mm"><col style="width:22mm">${showRead ? '<col>' : ''}${showMean ? '<col>' : ''}</colgroup>
+            <tbody>${rows}</tbody></table>`;
+    };
+    return `
+        <div style="display:flex; gap:5mm; align-items:flex-start; ${start ? 'page-break-before:always; break-before:page;' : ''}">
+            <div style="flex:1; min-width:0;">${table(start, start + COMPACT_PER_COL)}</div>
+            <div style="flex:1; min-width:0;">${table(start + COMPACT_PER_COL, start + COMPACT_PER_PAGE)}</div>
+        </div>`;
+}
+function buildCompactExam(list, showRead, showMean) {
+    let pages = '';
+    for (let start = 0; start < list.length; start += COMPACT_PER_PAGE) {
+        pages += compactPage(list, start, showRead, showMean);
+    }
+    return compactHead(list, showRead, showMean) + pages;
+}
+// ---- Tata letak longgar: satu kanji per baris ----
+const WIDE_CELL = 'border:1px solid #94a3b8; padding:6px 8px; vertical-align:middle;';
+function wideHead(list, showRead, showMean) {
+    return `
+        <div style="font-family:sans-serif; margin-bottom:14px;">
+            <h2 style="text-align:center; font-size:20px; margin:0 0 10px; color:#0f172a;">Soal Kanji JFT</h2>
+            <div style="display:flex; gap:16px; font-size:13px; color:#334155;">
+                <div style="flex:2;">Nama: <span style="display:inline-block; width:70%; border-bottom:1px solid #334155;">&nbsp;</span></div>
+                <div style="flex:1.3;">Tanggal: <span style="display:inline-block; width:55%; border-bottom:1px solid #334155;">&nbsp;</span></div>
+                <div style="flex:1;">Skor: <span style="display:inline-block; width:50%; border-bottom:1px solid #334155;">&nbsp;</span> / ${list.length}</div>
+            </div>
+            <div style="font-size:12px; color:#64748b; margin-top:8px;">
+                Tulis ${showRead && showMean ? 'hiragana dan arti' : showRead ? 'hiragana' : 'arti'} dari setiap kanji berikut.
+            </div>
+        </div>`;
+}
+function wideRow(item, i, showRead, showMean) {
+    return `
+        <tr style="page-break-inside:avoid;">
+            <td style="${WIDE_CELL} width:38px; text-align:center; font-size:12px; color:#64748b;">${i + 1}</td>
+            <td style="${WIDE_CELL} width:130px; text-align:center; font-size:22px; line-height:1.25; font-weight:bold; font-family:'Noto Sans JP',sans-serif; height:44px;">${esc(item[0])}</td>
+            ${showRead ? `<td style="${WIDE_CELL}"></td>` : ''}
+            ${showMean ? `<td style="${WIDE_CELL}"></td>` : ''}
+        </tr>`;
+}
+function wideTable(rowsHTML, showRead, showMean) {
+    return `
+        <table style="width:100%; border-collapse:collapse; font-family:sans-serif;">
+            <thead style="display:table-header-group;">
+                <tr style="background:#f1f5f9; font-size:12px; color:#334155;">
+                    <th style="${WIDE_CELL} width:38px;">No</th>
+                    <th style="${WIDE_CELL} width:130px;">Kanji</th>
+                    ${showRead ? `<th style="${WIDE_CELL}">Hiragana</th>` : ''}
+                    ${showMean ? `<th style="${WIDE_CELL}">Arti</th>` : ''}
+                </tr>
+            </thead>
+            <tbody>${rowsHTML}</tbody>
+        </table>`;
+}
+// ---- Tombol "Cetak": menu cetak bawaan browser ----
+function printExam() {
+    const d = buildExamData();
+    if (!d) return;
+    const { list, showRead, showMean } = d;
+    if (examState.layout === 'compact') {
+        $('exam-print').innerHTML = wrapPrint(buildCompactExam(list, showRead, showMean));
+    } else {
+        const rows = list.map((item, i) => wideRow(item, i, showRead, showMean)).join('');
+        $('exam-print').innerHTML = wrapPrint(wideHead(list, showRead, showMean) + wideTable(rows, showRead, showMean));
+    }
+    setTimeout(() => window.print(), 300);
+}
+window.addEventListener('afterprint', () => { $('exam-print').innerHTML = ''; });
+// ---- Tombol "Simpan PDF": langsung membuat & mengunduh file .pdf ----
+const PDF_LIBS = [
+    'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+];
+let pdfLibsPromise = null;
+let pdfBusy = false;
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Gagal memuat ' + src));
+        document.head.appendChild(s);
+    });
+}
+function loadPdfLibs() {
+    if (!pdfLibsPromise) {
+        pdfLibsPromise = Promise.all(PDF_LIBS.map(loadScript)).catch(e => { pdfLibsPromise = null; throw e; });
+    }
+    return pdfLibsPromise;
+}
+const PDF_PAGE_CSS = 'width:210mm; height:297mm; padding:9mm 10mm; box-sizing:border-box; overflow:hidden; background:#ffffff; color:#1e293b;';
+function newPdfPage(host, html) {
+    const p = document.createElement('div');
+    p.style.cssText = PDF_PAGE_CSS;
+    p.innerHTML = html;
+    host.appendChild(p);
+    return p;
+}
+function layoutWidePdf(host, list, showRead, showMean) {
+    let page = newPdfPage(host, wideHead(list, showRead, showMean) + wideTable('', showRead, showMean));
+    let tbody = page.querySelector('tbody');
+    list.forEach((item, i) => {
+        const html = wideRow(item, i, showRead, showMean);
+        tbody.insertAdjacentHTML('beforeend', html);
+        if (page.scrollHeight > page.clientHeight + 1 && tbody.rows.length > 1) {
+            tbody.lastElementChild.remove();
+            page = newPdfPage(host, wideTable('', showRead, showMean));
+            tbody = page.querySelector('tbody');
+            tbody.insertAdjacentHTML('beforeend', html);
+        }
+    });
+}
+function layoutCompactPdf(host, list, showRead, showMean) {
+    for (let start = 0; start < list.length; start += COMPACT_PER_PAGE) {
+        newPdfPage(host, (start === 0 ? compactHead(list, showRead, showMean) : '') + compactPage(list, start, showRead, showMean));
+    }
+}
+async function saveExamPdf() {
+    if (pdfBusy) return;
+    const d = buildExamData();
+    if (!d) return;
+    const { list, showRead, showMean } = d;
+    const btn = $('btn-exam-pdf');
+    pdfBusy = true;
+    btn.disabled = true;
+    showToast('Menyiapkan PDF…', true);
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed; left:-10000px; top:0; width:210mm; pointer-events:none;';
+    try {
+        await loadPdfLibs();
+        const kanjiText = list.map(x => x[0]).join('');
+        await Promise.all([
+            document.fonts.load("700 22px 'Noto Sans JP'", kanjiText),
+            document.fonts.load("700 11px 'Noto Sans JP'", kanjiText)
+        ]).catch(() => {});
+        document.body.appendChild(host);
+        if (examState.layout === 'compact') layoutCompactPdf(host, list, showRead, showMean);
+        else layoutWidePdf(host, list, showRead, showMean);
+        await document.fonts.ready;
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+        const pages = Array.from(host.children);
+        for (let i = 0; i < pages.length; i++) {
+            const canvas = await html2canvas(pages[i], { scale: 2.5, backgroundColor: '#ffffff', useCORS: true, logging: false });
+            if (i > 0) pdf.addPage();
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+            canvas.width = canvas.height = 0;
+        }
+        const { f, t } = getExamRange();
+        pdf.save(`Soal-Kanji-JFT-hal-${f}-${t}.pdf`);
+        showToast('PDF tersimpan');
+    } catch (err) {
+        console.error(err);
+        showToast('Gagal membuat PDF. Cek koneksi internet lalu coba lagi.');
+    } finally {
+        host.remove();
+        pdfBusy = false;
+        btn.disabled = false;
+    }
+}
 // ================= INISIALISASI =================
 buildWheel('from');
 buildWheel('to');
 setupRangeInputs();
 setupWriteInputs();
+buildExamWheel('from');
+buildExamWheel('to');
+setupExamInputs();
+refreshExamWheel('from', false);
+refreshExamWheel('to', false);
 refreshWheel('from', false);
 refreshWheel('to', false);
 updateOptStyles();
 updateTypeUI();
 renderCards();
 </script>
-
 </body>
 </html>
